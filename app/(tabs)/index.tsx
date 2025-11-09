@@ -1,98 +1,125 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import CTASection from '@/components/screens/tabs/CTA';
+import Features from '@/components/screens/tabs/Features';
+import Header from '@/components/screens/tabs/Header';
+import PremiumModels from '@/components/screens/tabs/PremiumModels';
+import SliderSection from '@/components/screens/tabs/SliderSection';
+import FuturisticBackgroundInner from '@/components/ui/FuturisticBackground';
+import {useAdMob} from '@/hooks/useAdMob';
+import {useAppTheme} from '@/hooks/useAppTheme';
+import {useLocaleAppearance} from '@/hooks/useLocaleAppearance';
+import {useToast} from '@/hooks/useToast';
+import {i18n} from '@/i18n/i18n';
+import {useUser} from '@/stores/userStore';
+import {router} from 'expo-router';
+import React, {memo, useCallback} from 'react';
+import {ScrollView, StyleSheet, View} from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+function HomeScreen() {
+  const {isDark} = useAppTheme();
+  const {locale, fonts, textAlign, isRTL} = useLocaleAppearance();
+  const {user} = useUser();
+  const {show} = useToast();
+  const {showInterstitial} = useAdMob();
 
-export default function HomeScreen() {
+  const handleFreeFeature = useCallback(
+    async (feature: string) => {
+      show({
+        message: i18n.t('actions.opening', {
+          feature: i18n.t(`home.${feature}`, {locale}),
+        }),
+        type: 'info',
+      });
+      try {
+        await showInterstitial();
+      } catch {}
+      // if (feature === 'retouch') {
+      //   router.push(
+      //     `/(modal)/freeEdit?featureId=${encodeURIComponent(feature)}`,
+      //   );
+      // }
+      if (feature === 'collage') {
+        router.push(`/(modal)/collage`);
+      } else {
+        router.push(
+          `/(modal)/freeEdit?featureId=${encodeURIComponent(feature)}`,
+        );
+      }
+    },
+
+    [show, locale],
+  );
+
+  const HeaderProps = React.useMemo(
+    () => ({fonts, locale, user, textAlign, isDark}),
+    [fonts, locale, user, textAlign, isDark],
+  );
+
+  const SliderSectionProps = React.useMemo(
+    () => ({fonts, locale, user, textAlign, isDark, isRTL}),
+    [fonts, locale, user, textAlign, isDark, isRTL],
+  );
+
+  const FeaturesProps = React.useMemo(
+    () => ({
+      onPressFeature: handleFreeFeature,
+      textAlign,
+      fonts,
+      isRTL,
+      locale,
+      isDark,
+    }),
+    [handleFreeFeature, textAlign, fonts, locale, isDark, isRTL],
+  );
+
+  const PremiumModelsProps = React.useMemo(
+    () => ({
+      textAlign,
+      fonts,
+      locale,
+      isDark,
+      isRTL,
+    }),
+    [textAlign, fonts, locale, isDark, isRTL],
+  );
+
+  const CTASectionProps = React.useMemo(
+    () => ({
+      user,
+      isUnlocked: user.membership === 'premium',
+      textAlign,
+      fonts,
+      locale,
+      isDark,
+      isRTL,
+    }),
+    [user, textAlign, fonts, locale, isDark, isRTL],
+  );
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <FuturisticBackgroundInner />
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <Header {...HeaderProps} />
+
+      <SliderSection {...SliderSectionProps} />
+
+      {/* Fonctionnalités Gratuites */}
+      <Features {...FeaturesProps} />
+
+      {/* Modèles IA Premium */}
+      <PremiumModels {...PremiumModelsProps} />
+
+      {/* CTA Section */}
+      <CTASection {...CTASectionProps} />
+      <View style={{height: 160}} />
+    </ScrollView>
   );
 }
 
+export default memo(HomeScreen);
+
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  container: {
+    flex: 1,
   },
 });
